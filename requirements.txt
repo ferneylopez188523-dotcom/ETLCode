@@ -2,3 +2,8 @@ pymongo
 logging
 datetime
 pandas
+jupyter
+matplotlib
+seaborn
+plotly
+openpyxl
