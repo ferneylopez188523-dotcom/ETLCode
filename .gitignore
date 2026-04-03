@@ -1,0 +1,16 @@
+# Entornos virtuales
+venv/
+env/
+.venv/
+
+# Archivos de datos
+*.csv
+*.csv.gz
+
+# Archivos de caché de Python
+__pycache__/
+*.pyc
+
+# Logs de ejecución
+logs/
+*.log

@@ -1,0 +1,4 @@
+pymongo
+logging
+datetime
+pandas
