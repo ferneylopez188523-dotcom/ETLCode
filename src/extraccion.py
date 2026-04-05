@@ -107,7 +107,7 @@ class Extraccion:
 # Bloque de ejecución principal, testeo.
 # ==========================================
 
-if __name__ == "__main__":
+"""if __name__ == "__main__":
     # 1. Instanciamos la clase de Extracción
     extractor = Extraccion(db_name="airbnb_buenos_aires")
     # 2. Conectamos a la BD
@@ -118,4 +118,4 @@ if __name__ == "__main__":
     # Validación e impresión por consola.
     print("\nResumen de DataFrames:")
     for nombre, df in dataframes_extraidos.items():
-        print(f"- {nombre}: {df.shape[0]} filas, {df.shape[1]} columnas")
+        print(f"- {nombre}: {df.shape[0]} filas, {df.shape[1]} columnas")"""
