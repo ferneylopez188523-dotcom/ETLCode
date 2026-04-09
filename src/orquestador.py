@@ -1,10 +1,11 @@
-import os
 import logging
+import os
 from datetime import datetime
 
 # Importamos nuestras clases desde la carpeta src
 from extraccion import Extraccion
 from transformacion import Transformacion
+
 
 def configurar_log_orquestador():
     """Configura un log general para monitorear el pipeline completo."""

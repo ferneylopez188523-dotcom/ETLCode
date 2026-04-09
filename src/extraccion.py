@@ -1,9 +1,10 @@
-from pymongo import MongoClient
+import logging
 import os
 from datetime import datetime
-import logging
+
 import pandas as pd
-from pathlib import Path
+from pymongo import MongoClient
+
 
 class Extraccion:
     """
