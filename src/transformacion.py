@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from datetime import datetime
@@ -43,22 +44,17 @@ class Transformacion:
         console.setLevel(logging.INFO)
         logging.getLogger('').addHandler(console)
 
-    def _limpiar_basicos(self, df: pd.DataFrame, nombre_df: str) -> pd.DataFrame:
+    def _limpiar_basicos(self, df: pd.DataFrame, nombre_df: str, claves: list[str]) -> pd.DataFrame:
         """
-        Elimina registros duplicados basados en la llave primaria y gestiona valores nulos.
+        Elimina registros duplicados basados en las claves proporcionadas y gestiona valores nulos.
         """
         registros_antes = len(df)
         
-        # Solución al TypeError de listas no hasheables:
-        # Buscamos duplicados solo por la llave primaria.
-        if 'id' in df.columns:
-            df = df.drop_duplicates(subset=['id'])
-            df = df.dropna(subset=['id'])
-        elif 'listing_id' in df.columns:
-            df = df.drop_duplicates(subset=['listing_id'])
-            df = df.dropna(subset=['listing_id'])
+        claves_existentes = [c for c in claves if c in df.columns]
+        if claves_existentes:
+            df = df.drop_duplicates(subset=claves_existentes)
+            df = df.dropna(subset=claves_existentes)
         else:
-            # Fallback en caso de que no tenga llave primaria (no debería pasar con estos datasets)
             df = df.drop_duplicates()
             
         registros_despues = len(df)
@@ -129,6 +125,22 @@ class Transformacion:
                 logging.error(f"Error al desanidar '{columna}': {e}")
         return df
     
+    def flatten_columna(self, df: pd.DataFrame, columna: str) -> pd.DataFrame:
+        """
+        Si la columna contiene listas o JSONs, la convierte a formato de lista real y luego hace explode para aplanar.
+        """
+        if columna in df.columns:
+            # Convertir string a lista real
+            df[columna] = df[columna].apply(
+                lambda x: json.loads(x) if isinstance(x, str) else x
+            )
+            
+            # Explode (flatten)
+            df = df.explode(columna)
+        
+        return df
+
+
     def ejecutar_transformacion(self) -> dict:
         """
         Orquesta la ejecución de todas las transformaciones por cada DataFrame.
@@ -144,8 +156,19 @@ class Transformacion:
             logging.info(f"Transformando tabla: {nombre}...")
             df_t = df.copy()
             
-            # 1. Limpieza.
-            df_t = self._limpiar_basicos(df_t, nombre)
+            CLAVES_DUPLICADOS = {
+    "Listings":  ["id"],
+    "Reviews":   ["id"],
+    "Calendar":  ["listing_id", "date"],
+}
+            CLAVES_DUPLICADOS = {
+                "Listings":  ["id"],
+                "Reviews":   ["id"],
+                "Calendar":  ["listing_id", "date"],
+            }
+                        # 1. Limpieza.
+            claves = CLAVES_DUPLICADOS.get(nombre, [])
+            df_t = self._limpiar_basicos(df_t, nombre, claves)
             
             # 2. Transformaciones específicas.
             if nombre == 'Listings':
