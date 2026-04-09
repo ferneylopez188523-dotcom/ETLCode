@@ -14,3 +14,6 @@ __pycache__/
 # Logs de ejecución
 logs/
 *.log
+
+# Data
+*.db
