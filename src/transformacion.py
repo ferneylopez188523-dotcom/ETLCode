@@ -100,16 +100,37 @@ class Transformacion:
 
     def _categorizar_precios(self, df: pd.DataFrame, columna: str) -> pd.DataFrame:
         """
-        Categoriza los precios numéricos en rangos (Bajo, Medio, Alto, Premium).
+        Categoriza los precios numéricos en rangos (Económico/Estándar/Alto/Premium)
+        dentro de cada room_type para evitar distorsiones.
         """
-        if columna in df.columns and pd.api.types.is_numeric_dtype(df[columna]):
-            try:
-                # Definimos rangos (bins) basados en percentiles o rangos fijos. Aquí usamos quantiles para balanceo.
-                etiquetas = ['Económico', 'Estándar', 'Alto', 'Premium']
-                df[f'{columna}_rango'] = pd.qcut(df[columna], q=4, labels=etiquetas, duplicates='drop')
-                logging.info(f"Precios categorizados en nueva columna '{columna}_rango'.")
-            except Exception as e:
-                logging.warning(f"No se pudo categorizar '{columna}'. Puede que no haya suficientes datos válidos: {e}")
+        if columna not in df.columns or 'room_type' not in df.columns:
+            return df
+
+        if not pd.api.types.is_numeric_dtype(df[columna]):
+            return df
+
+        try:
+            df = df.copy()
+            etiquetas = ['Económico', 'Estándar', 'Alto', 'Premium']
+            df[f'{columna}_rango'] = None
+
+            for rt in df['room_type'].unique():
+                mask = df['room_type'] == rt
+                datos_rt = df.loc[mask, columna].dropna()
+
+                if len(datos_rt) < 4:
+                    df.loc[mask, f'{columna}_rango'] = pd.cut(
+                        datos_rt, bins=3, labels=etiquetas[:len(datos_rt)], duplicates='drop'
+                    )
+                else:
+                    df.loc[mask, f'{columna}_rango'] = pd.qcut(
+                        datos_rt, q=4, labels=etiquetas, duplicates='drop'
+                    )
+
+            df[f'{columna}_rango'] = df[f'{columna}_rango'].cat.add_categories([None])
+            logging.info(f"Precios categorizados por room_type en '{columna}_rango'.")
+        except Exception as e:
+            logging.warning(f"No se pudo categorizar '{columna}' por room_type: {e}")
         return df
 
     def _desanidar_texto(self, df: pd.DataFrame, columna: str) -> pd.DataFrame:
@@ -173,7 +194,7 @@ class Transformacion:
             # 2. Transformaciones específicas.
             if nombre == 'Listings':
                 #df_t = self._normalizar_precio(df_t, 'price')
-                #df_t = self._categorizar_precios(df_t, 'price')
+                df_t = self._categorizar_precios(df_t, 'price')
                 df_t = self._desanidar_texto(df_t, 'amenities')
                 df_t = self._desanidar_texto(df_t, 'host_verifications')
                 
