@@ -13,7 +13,7 @@ class Extraccion:
     """
     
     # Constructor de la clase, establece la conexión a MongoDB y selecciona la base de datos.
-    def __init__(self, db_name="airbnb_buenos_aires", uri="mongodb://localhost:27017/"):
+    def __init__(self, db_name="airbnb_mx", uri="mongodb://localhost:27017/"):
         self.uri = uri
         self.db_name = db_name
         self.client = None
@@ -110,7 +110,7 @@ class Extraccion:
 
 """if __name__ == "__main__":
     # 1. Instanciamos la clase de Extracción
-    extractor = Extraccion(db_name="airbnb_buenos_aires")
+    extractor = Extraccion(db_name="airbnb_mx")
     # 2. Conectamos a la BD
     extractor.conectar_mongodb()
     # 3. Extraemos los datos a nuestro diccionario de DataFrames.
