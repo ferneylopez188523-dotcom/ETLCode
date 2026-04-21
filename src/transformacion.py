@@ -193,7 +193,7 @@ class Transformacion:
             
             # 2. Transformaciones específicas.
             if nombre == 'Listings':
-                #df_t = self._normalizar_precio(df_t, 'price')
+                df_t = self._normalizar_precio(df_t, 'price')
                 df_t = self._categorizar_precios(df_t, 'price')
                 df_t = self._desanidar_texto(df_t, 'amenities')
                 df_t = self._desanidar_texto(df_t, 'host_verifications')
