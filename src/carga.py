@@ -127,11 +127,12 @@ class Carga:
         logging.info("--- INICIANDO EXPORTACIÓN A XLSX ---")
         os.makedirs(ruta, exist_ok=True)
         resultados = {}
-        
+        """
         try:
             if archivo:
                 ruta_completa = os.path.join(ruta, archivo)
                 with pd.ExcelWriter(ruta_completa, engine='openpyxl') as writer:
+                    
                     for nombre, df in self.dfs.items():
                         df.to_excel(writer, sheet_name=nombre, index=False)
                 resultados[archivo] = {'estado': 'exito', 'hojas': len(self.dfs)}
@@ -146,7 +147,72 @@ class Carga:
             logging.info("--- EXPORTACIÓN A XLSX COMPLETADA ---")
         except Exception as e:
             logging.error(f"Error al exportar XLSX: {e}")
-            resultados['error'] = str(e)
+            resultados['error'] = str(e)"""
+        LIMITE_FILAS_XLSX = 500000
+            
+        try:
+
+            for nombre, df in self.dfs.items():
+
+                filas = len(df)
+
+                # Nombre base del archivo
+                if archivo:
+                    base = os.path.splitext(archivo)[0]
+                    nombre_archivo = f"{base}_{nombre}"
+                else:
+                    nombre_archivo = nombre
+
+                # -----------------------------------------
+                # Si supera 500k filas -> CSV
+                # -----------------------------------------
+                if filas > LIMITE_FILAS_XLSX:
+
+                    ruta_salida = os.path.join(ruta, f"{nombre_archivo}.csv")
+
+                    df.to_csv(
+                        ruta_salida,
+                        index=False,
+                        encoding="utf-8-sig"
+                    )
+
+                    resultados[nombre] = {
+                        "estado": "exito",
+                        "tipo": "csv",
+                        "filas": filas,
+                        "ruta": ruta_salida
+                    }
+
+                    logging.info(
+                        f"[{nombre}] {filas} filas > {LIMITE_FILAS_XLSX}. Exportado CSV: {ruta_salida}"
+                    )
+
+                # -----------------------------------------
+                # Si no supera 500k -> XLSX
+                # -----------------------------------------
+                else:
+
+                    ruta_salida = os.path.join(ruta, f"{nombre_archivo}.xlsx")
+
+                    with pd.ExcelWriter(ruta_salida, engine="openpyxl") as writer:
+                        df.to_excel(writer, sheet_name=nombre[:31], index=False)
+
+                    resultados[nombre] = {
+                        "estado": "exito",
+                        "tipo": "xlsx",
+                        "filas": filas,
+                        "ruta": ruta_salida
+                    }
+
+                    logging.info(
+                        f"[{nombre}] {filas} filas <= {LIMITE_FILAS_XLSX}. Exportado XLSX: {ruta_salida}"
+                    )
+
+            logging.info("--- EXPORTACIÓN COMPLETADA ---")
+
+        except Exception as e:
+            logging.error(f"Error al exportar archivos: {e}")
+            resultados["error"] = str(e)
         
         return resultados
 
