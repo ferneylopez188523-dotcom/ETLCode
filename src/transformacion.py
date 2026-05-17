@@ -1,8 +1,11 @@
-import os
+import json
 import logging
+import os
 from datetime import datetime
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
 
 class Transformacion:
     """
@@ -41,22 +44,17 @@ class Transformacion:
         console.setLevel(logging.INFO)
         logging.getLogger('').addHandler(console)
 
-    def _limpiar_basicos(self, df: pd.DataFrame, nombre_df: str) -> pd.DataFrame:
+    def _limpiar_basicos(self, df: pd.DataFrame, nombre_df: str, claves: list[str]) -> pd.DataFrame:
         """
-        Elimina registros duplicados basados en la llave primaria y gestiona valores nulos.
+        Elimina registros duplicados basados en las claves proporcionadas y gestiona valores nulos.
         """
         registros_antes = len(df)
         
-        # Solución al TypeError de listas no hasheables:
-        # Buscamos duplicados solo por la llave primaria.
-        if 'id' in df.columns:
-            df = df.drop_duplicates(subset=['id'])
-            df = df.dropna(subset=['id'])
-        elif 'listing_id' in df.columns:
-            df = df.drop_duplicates(subset=['listing_id'])
-            df = df.dropna(subset=['listing_id'])
+        claves_existentes = [c for c in claves if c in df.columns]
+        if claves_existentes:
+            df = df.drop_duplicates(subset=claves_existentes)
+            df = df.dropna(subset=claves_existentes)
         else:
-            # Fallback en caso de que no tenga llave primaria (no debería pasar con estos datasets)
             df = df.drop_duplicates()
             
         registros_despues = len(df)
@@ -102,16 +100,37 @@ class Transformacion:
 
     def _categorizar_precios(self, df: pd.DataFrame, columna: str) -> pd.DataFrame:
         """
-        Categoriza los precios numéricos en rangos (Bajo, Medio, Alto, Premium).
+        Categoriza los precios numéricos en rangos (Económico/Estándar/Alto/Premium)
+        dentro de cada room_type para evitar distorsiones.
         """
-        if columna in df.columns and pd.api.types.is_numeric_dtype(df[columna]):
-            try:
-                # Definimos rangos (bins) basados en percentiles o rangos fijos. Aquí usamos quantiles para balanceo.
-                etiquetas = ['Económico', 'Estándar', 'Alto', 'Premium']
-                df[f'{columna}_rango'] = pd.qcut(df[columna], q=4, labels=etiquetas, duplicates='drop')
-                logging.info(f"Precios categorizados en nueva columna '{columna}_rango'.")
-            except Exception as e:
-                logging.warning(f"No se pudo categorizar '{columna}'. Puede que no haya suficientes datos válidos: {e}")
+        if columna not in df.columns or 'room_type' not in df.columns:
+            return df
+
+        if not pd.api.types.is_numeric_dtype(df[columna]):
+            return df
+
+        try:
+            df = df.copy()
+            etiquetas = ['Económico', 'Estándar', 'Alto', 'Premium']
+            df[f'{columna}_rango'] = None
+
+            for rt in df['room_type'].unique():
+                mask = df['room_type'] == rt
+                datos_rt = df.loc[mask, columna].dropna()
+
+                if len(datos_rt) < 4:
+                    df.loc[mask, f'{columna}_rango'] = pd.cut(
+                        datos_rt, bins=3, labels=etiquetas[:len(datos_rt)], duplicates='drop'
+                    )
+                else:
+                    df.loc[mask, f'{columna}_rango'] = pd.qcut(
+                        datos_rt, q=4, labels=etiquetas, duplicates='drop'
+                    )
+
+            df[f'{columna}_rango'] = df[f'{columna}_rango'].cat.add_categories([None])
+            logging.info(f"Precios categorizados por room_type en '{columna}_rango'.")
+        except Exception as e:
+            logging.warning(f"No se pudo categorizar '{columna}' por room_type: {e}")
         return df
 
     def _desanidar_texto(self, df: pd.DataFrame, columna: str) -> pd.DataFrame:
@@ -127,6 +146,22 @@ class Transformacion:
                 logging.error(f"Error al desanidar '{columna}': {e}")
         return df
     
+    def flatten_columna(self, df: pd.DataFrame, columna: str) -> pd.DataFrame:
+        """
+        Si la columna contiene listas o JSONs, la convierte a formato de lista real y luego hace explode para aplanar.
+        """
+        if columna in df.columns:
+            # Convertir string a lista real
+            df[columna] = df[columna].apply(
+                lambda x: json.loads(x) if isinstance(x, str) else x
+            )
+            
+            # Explode (flatten)
+            df = df.explode(columna)
+        
+        return df
+
+
     def ejecutar_transformacion(self) -> dict:
         """
         Orquesta la ejecución de todas las transformaciones por cada DataFrame.
@@ -142,13 +177,24 @@ class Transformacion:
             logging.info(f"Transformando tabla: {nombre}...")
             df_t = df.copy()
             
-            # 1. Limpieza.
-            df_t = self._limpiar_basicos(df_t, nombre)
+            CLAVES_DUPLICADOS = {
+    "Listings":  ["id"],
+    "Reviews":   ["id"],
+    "Calendar":  ["listing_id", "date"],
+}
+            CLAVES_DUPLICADOS = {
+                "Listings":  ["id"],
+                "Reviews":   ["id"],
+                "Calendar":  ["listing_id", "date"],
+            }
+                        # 1. Limpieza.
+            claves = CLAVES_DUPLICADOS.get(nombre, [])
+            df_t = self._limpiar_basicos(df_t, nombre, claves)
             
             # 2. Transformaciones específicas.
             if nombre == 'Listings':
-                #df_t = self._normalizar_precio(df_t, 'price')
-                #df_t = self._categorizar_precios(df_t, 'price')
+                df_t = self._normalizar_precio(df_t, 'price')
+                df_t = self._categorizar_precios(df_t, 'price')
                 df_t = self._desanidar_texto(df_t, 'amenities')
                 df_t = self._desanidar_texto(df_t, 'host_verifications')
                 

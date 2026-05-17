@@ -21,7 +21,7 @@ etl_airbnb/
 
 - Python 3.8+
 - MongoDB (local o remoto)
-- Las colecciones `Listings`, `Reviews` y `Calendar` en la base de datos `airbnb_buenos_aires`
+- Las colecciones `Listings`, `Reviews` y `Calendar` en la base de datos `airbnb_mx`
 
 ## Instalación
 

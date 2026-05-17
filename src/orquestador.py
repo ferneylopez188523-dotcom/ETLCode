@@ -1,10 +1,13 @@
-import os
 import logging
+import os
 from datetime import datetime
+
+from carga import Carga
 
 # Importamos nuestras clases desde la carpeta src
 from extraccion import Extraccion
 from transformacion import Transformacion
+
 
 def configurar_log_orquestador():
     """Configura un log general para monitorear el pipeline completo."""
@@ -70,6 +73,12 @@ def ejecutar_etl():
         """Acá irá el llamado de la clase de carga, 
         que se encargará de tomar los DataFrames limpios y 
         cargarlos a la base de datos destino (SQLite)."""
+
+        # Después de la transformación:
+        logging.info(">>> FASE 3: INICIANDO CARGA")
+        cargador = Carga(datos_limpios)
+        resultados = cargador.ejecutar_carga(exportar=True)
+        logging.info(f"Resultado de carga: {resultados}")
 
 
         logging.info("========================================")
