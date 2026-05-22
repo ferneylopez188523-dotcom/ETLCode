@@ -1,8 +1,30 @@
-# Taller 02: Proceso ETL con los datasets de Airbnb Ciudad Autónoma de Buenos Aires, Argentina (20%)
+Actua como un asesor experto en Inteligencia de Negocios con gran experiencia.
 
-## Checklist
+Analiza y compre tanto los requerimientos del taller del 'Taller 5 Trabajo Final BI 2026-1', como los documentación y código dado.
 
-Todo el punto 1. Conexión y Extracción y el todo el punto 2. EDA están listos. Esta es la estructura del proyecto, el archivo transformacion.py que es el punto 3 está casi al 100%, falta cosas pequeñas como agregar trimestre y verificar que todos los puntos se encuentren hechos, por si se me pasó.
-El archivo orquestador.py ejecuta extraccion.py y transformacion.py, si lo van a ejecutar desde consola sería python src/orquestador.py para que guarde los logs en la carpeta logs, si se ejecuta dentro de src (python orquestador.py crea una carpeta logs internamente, eso no lo logré solucionar. Entonces punto 1, 2 terminados 100% el punto 3 está creería que un 95%, quedó en el orquestador.py la sección para hacer el call a la clase Carga. Revisen porfa y si ven algo extraño me cuentan o si me hizo falta algo, se los agradecería.
+Como contexto de trabajo te dare:
 
-Nota: No sé si le pase a ustedes también pero al cargar el archivo de Listings a MongoDB no me carga la columna 'price' (aunque está totalmente vacía), me cuentan cualquier cosa.
+- Diccionario del dataset y variables a usar, correspondiente a Listings, Calendar y Review Data.
+- Trabajos realizados previamente, Taller 03 - Visualización Airbnb MX, y visualuzacion de datos en Power BI: Average price by room por room_type, total listings por room_type, avg available days por room_type, average price por neighborhood_cleansed y total review por name.
+- Código del ETL y del modelo de Machine Learning, K-Means.
+
+Ten en cuenta:
+
+- El ETL fue actualizado para apuntar a la base de datos correcta (airbnb_mx)
+- Los datos usados para la visualización y ML son los resultado del ETL, el .db.
+
+Cantidatos a preguntas:
+
+- Preguntas de Negocio trabajadas en el ML K-Means:
+  - P1: Que zonas presentan mayor rentabilidad promedio?
+  - P2: Que variables influyen mas en el precio?
+  - P3: Existen patrones diferenciados entre tipos de alojamiento o sectores geograficos?
+
+- Otras preguntas:
+  - ¿Las alcaldías con mayor densidad de listings presentan precios significativamente distintos a las de menor densidad, controlando por room_type?
+  - ¿El estatus de superhost tiene correlación con precios más altos, o los superhosts compiten en precio para mantener ocupación?
+  - Short-Term Rentals
+  - Listings per Host
+  - ¿Qué alcaldías concentran los perfiles de alojamiento con mayor potencial de rentabilidad, considerando precio y tasa de ocupación estimada?
+  - ¿El precio de los alojamientos en CDMX responde principalmente al tipo de alojamiento, o la zona geográfica tiene un peso explicativo independiente?
+  - ¿Existen segmentos de mercado diferenciados según el modelo operativo del anfitrión (individual vs multi-listing), y cómo se distribuyen geográficamente?
